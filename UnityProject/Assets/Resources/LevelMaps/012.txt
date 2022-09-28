@@ -1,0 +1,14 @@
+10;
+12;
+          ;
+p   w    w;
+c   w   ww;
+wc       c;
+ww        ;
+          ;
+   wwwwww ;
+   wwwwwww;
+     w    ;
+ww c   c  ;
+        c ;
+wwwww     ;
