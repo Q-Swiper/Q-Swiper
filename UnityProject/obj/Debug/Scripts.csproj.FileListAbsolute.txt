@@ -1,2 +1,0 @@
-Q:\Meine Unity Projekte\First Mobile Game\obj\Debug\Scripts.csprojAssemblyReference.cache
-Q:\Meine Unity Projekte\First Mobile Game\obj\Debug\Scripts.csproj.CoreCompileInputs.cache
