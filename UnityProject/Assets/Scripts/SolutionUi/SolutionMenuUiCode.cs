@@ -8,6 +8,7 @@ public class SolutionMenuUiCode : MonoBehaviour
     public GameObject Popup;
     public GameObject CloseButton;
     public GameObject LightBulbLight;
+
     private void Start()
     {
         ResizePopup();
