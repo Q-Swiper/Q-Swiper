@@ -1,21 +1,17 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.Advertisements;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Button))]
 public class RewardedAdsButton : MonoBehaviour, IUnityAdsListener
 {
+    private const string androidGameId = "3919321";
 
-#if UNITY_IOS
-    private string gameId = "3919320";
-#elif UNITY_ANDROID
-    private string gameId = "3919321";
-#endif
-
-    Button myButton;
+    private Button myButton;
     public string myPlacementId = "rewardedVideo";
-    void Awake()
+
+    private void Awake()
     {
         myButton = GetComponent<Button>();
 
@@ -27,7 +23,7 @@ public class RewardedAdsButton : MonoBehaviour, IUnityAdsListener
 
         // Initialize the Ads listener and service:
         Advertisement.AddListener(this);
-        Advertisement.Initialize(gameId, true);
+        Advertisement.Initialize(androidGameId, true);
     }
 
     public void OnDestroy()
@@ -44,7 +40,7 @@ public class RewardedAdsButton : MonoBehaviour, IUnityAdsListener
     // Implement IUnityAdsListener interface methods:
     public void OnUnityAdsReady(string placementId)
     {
-        // If the ready Placement is rewarded, activate the button: 
+        // If the ready Placement is rewarded, activate the button:
         if (placementId == myPlacementId)
         {
             myButton.interactable = true;
@@ -58,11 +54,11 @@ public class RewardedAdsButton : MonoBehaviour, IUnityAdsListener
         {
             // Reward the user for watching the ad to completion.
             Scene scene = gameObject.scene;
-            var rootObjects = scene.GetRootGameObjects();
+            GameObject[] rootObjects = scene.GetRootGameObjects();
             GameObject uiCode = null;
-            foreach(var rootObject in rootObjects)
+            foreach (GameObject rootObject in rootObjects)
             {
-                if(rootObject.name == "UICode")
+                if (rootObject.name == "UICode")
                 {
                     uiCode = rootObject;
                 }
