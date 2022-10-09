@@ -6,7 +6,11 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Button))]
 public class RewardedAdsButton : MonoBehaviour, IUnityAdsListener
 {
-    private const string androidGameId = "3919321";
+#if UNITY_IOS
+    private const string gameId = "3919320";
+#elif UNITY_ANDROID
+    private const string gameId = "3919321";
+#endif
 
     private Button myButton;
     public string myPlacementId = "rewardedVideo";
@@ -23,7 +27,7 @@ public class RewardedAdsButton : MonoBehaviour, IUnityAdsListener
 
         // Initialize the Ads listener and service:
         Advertisement.AddListener(this);
-        Advertisement.Initialize(androidGameId, true);
+        Advertisement.Initialize(gameId, true);
     }
 
     public void OnDestroy()
