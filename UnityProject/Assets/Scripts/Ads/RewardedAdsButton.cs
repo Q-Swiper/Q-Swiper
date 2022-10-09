@@ -4,88 +4,109 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Button))]
-public class RewardedAdsButton : MonoBehaviour, IUnityAdsListener
+public class RewardedAdsButton : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsShowListener
 {
-#if UNITY_IOS
-    private const string gameId = "3919320";
-#elif UNITY_ANDROID
-    private const string gameId = "3919321";
-#endif
-
-    private Button myButton;
-    public string myPlacementId = "rewardedVideo";
+    [SerializeField] private Button _showAdButton;
+    [SerializeField] private string _androidAdUnitId = "3919321";
+    [SerializeField] private string _iOSAdUnitId = "3919320";
+    private string _adUnitId = null; // This will remain null for unsupported platforms
 
     private void Awake()
     {
-        myButton = GetComponent<Button>();
+        // Get the Ad Unit ID for the current platform:
+#if UNITY_IOS
+        _adUnitId = _iOSAdUnitId;
+#elif UNITY_ANDROID
+        _adUnitId = _androidAdUnitId;
+#endif
 
-        // Set interactivity to be dependent on the Placement’s status:
-        myButton.interactable = Advertisement.IsReady(myPlacementId);
-
-        // Map the ShowRewardedVideo function to the button’s click listener:
-        if (myButton) myButton.onClick.AddListener(ShowRewardedVideo);
-
-        // Initialize the Ads listener and service:
-        Advertisement.AddListener(this);
-        Advertisement.Initialize(gameId, true);
+        // Disable the button until the ad is ready to show:
+        _showAdButton.interactable = false;
     }
 
-    public void OnDestroy()
+    // Load content to the Ad Unit:
+    public void LoadAd()
     {
-        Advertisement.RemoveListener(this);
+        // IMPORTANT! Only load content AFTER initialization (in this example, initialization is handled in a different script).
+        Debug.Log("Loading Ad: " + _adUnitId);
+        Advertisement.Load(_adUnitId, this);
     }
 
-    // Implement a function for showing a rewarded video ad:
-    public void ShowRewardedVideo()
+    // If the ad successfully loads, add a listener to the button and enable it:
+    public void OnUnityAdsAdLoaded(string adUnitId)
     {
-        Advertisement.Show(myPlacementId);
-    }
+        Debug.Log("Ad Loaded: " + adUnitId);
 
-    // Implement IUnityAdsListener interface methods:
-    public void OnUnityAdsReady(string placementId)
-    {
-        // If the ready Placement is rewarded, activate the button:
-        if (placementId == myPlacementId)
+        if (adUnitId.Equals(_adUnitId))
         {
-            myButton.interactable = true;
+            // Configure the button to call the ShowAd() method when clicked:
+            _showAdButton.onClick.AddListener(ShowAd);
+            // Enable the button for users to click:
+            _showAdButton.interactable = true;
         }
     }
 
-    public void OnUnityAdsDidFinish(string placementId, ShowResult showResult)
+    // Implement a method to execute when the user clicks the button:
+    public void ShowAd()
     {
-        // Define conditional logic for each ad completion status:
-        if (showResult == ShowResult.Finished)
+        // Disable the button:
+        _showAdButton.interactable = false;
+        // Then show the ad:
+        Advertisement.Show(_adUnitId, this);
+    }
+
+    // Implement the Show Listener's OnUnityAdsShowComplete callback method to determine if the user gets a reward:
+    public void OnUnityAdsShowComplete(string adUnitId, UnityAdsShowCompletionState showCompletionState)
+    {
+        if (adUnitId.Equals(_adUnitId) && showCompletionState.Equals(UnityAdsShowCompletionState.COMPLETED))
         {
-            // Reward the user for watching the ad to completion.
-            Scene scene = gameObject.scene;
-            GameObject[] rootObjects = scene.GetRootGameObjects();
-            GameObject uiCode = null;
-            foreach (GameObject rootObject in rootObjects)
+            Debug.Log("Unity Ads Rewarded Ad Completed");
+            RewardUser();
+
+            // Load another ad:
+            Advertisement.Load(_adUnitId, this);
+        }
+    }
+
+    // Implement Load and Show Listener error callbacks:
+    public void OnUnityAdsFailedToLoad(string adUnitId, UnityAdsLoadError error, string message)
+    {
+        Debug.Log($"Error loading Ad Unit {adUnitId}: {error} - {message}");
+        // Use the error details to determine whether to try to load another ad.
+    }
+
+    public void OnUnityAdsShowFailure(string adUnitId, UnityAdsShowError error, string message)
+    {
+        Debug.Log($"Error showing Ad Unit {adUnitId}: {error} - {message}");
+        // Use the error details to determine whether to try to load another ad.
+    }
+
+    public void OnUnityAdsShowStart(string adUnitId)
+    {
+    }
+
+    public void OnUnityAdsShowClick(string adUnitId)
+    {
+    }
+
+    private void RewardUser()
+    {
+        Scene scene = gameObject.scene;
+        GameObject[] rootObjects = scene.GetRootGameObjects();
+        GameObject uiCode = null;
+        foreach (GameObject rootObject in rootObjects)
+        {
+            if (rootObject.name == "UICode")
             {
-                if (rootObject.name == "UICode")
-                {
-                    uiCode = rootObject;
-                }
+                uiCode = rootObject;
             }
-            uiCode.GetComponent<InGame>().ActivateSolution();
         }
-        else if (showResult == ShowResult.Skipped)
-        {
-            // Do not reward the user for skipping the ad.
-        }
-        else if (showResult == ShowResult.Failed)
-        {
-            Debug.LogWarning("The ad did not finish due to an error.");
-        }
+        uiCode.GetComponent<InGame>().ActivateSolution();
     }
 
-    public void OnUnityAdsDidError(string message)
+    private void OnDestroy()
     {
-        // Log the error.
-    }
-
-    public void OnUnityAdsDidStart(string placementId)
-    {
-        // Optional actions to take when the end-users triggers an ad.
+        // Clean up the button listeners:
+        _showAdButton.onClick.RemoveAllListeners();
     }
 }
